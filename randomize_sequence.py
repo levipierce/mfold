@@ -1,4 +1,4 @@
-
+#!/usr/bin/python
 import random
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
@@ -16,14 +16,36 @@ def read_sequence(fname):
     for record in SeqIO.parse(handle, "fasta") :
         #Build a list of short sequences:
         sequence = list(record.seq)
+        header = record.description
+        start_end_abs_pos = get_start_end_abs_position(header)
+
     handle.close()
 
+    maps = get_position_maps(sequence, start_end_abs_pos)
     
-    return sequence
+    return (sequence, maps)
+
+def get_start_end_abs_position(a_header):
+    start, end = a_header.split(":")[1].split("-")
+    return (int(start), int(end))
+
+def get_position_maps(seq, start_end):
+    rel_abs_pos_map = {}
+    abs_rel_pos_map = {}
+    start = start_end[0]
+
+    for idx,n in enumerate(seq):
+        rel_abs_pos_map[idx] = start + idx
+        abs_rel_pos_map[start + idx] = idx
+
+    return (rel_abs_pos_map, abs_rel_pos_map)
 
 
-def shuffle_sequence(sequence, n=100):
+def shuffle_sequence(sequence,pos_maps, n=100,  mask=None):
     """
+    chr6:31795202-31797300
+    For supplied list of sites to mask need to make them relative to the
+    range in the fasta
     """
     original_sequence_string = ''.join(sequence)
     temp_sequence = sequence
@@ -31,6 +53,20 @@ def shuffle_sequence(sequence, n=100):
         random.shuffle(temp_sequence)
     #convert back to Seq object
     randomized_sequence_string = ''.join(temp_sequence)
+    if mask:
+        abs_rel_pos_map = pos_maps[1]
+        mask_name = mask[0]
+        #[(s0, e0), (s1,e1), (s2,e2)]
+        mask_regions = mask[1]
+        ran = list(randomized_sequence_string)
+        ref = list(original_sequence_string)
+        #can have multiple regions defined
+        for region in mask_regions:
+            s = abs_rel_pos_map[int(region[0])]
+            e = abs_rel_pos_map[int(region[1]) + 1]
+            for i in range(s,e):
+                ran[i] = ref[i]
+        randomized_sequence_string = ''.join(ran)
     #Double check first few nucleotides (The first 10 and last 10)
     print "Original sequence  : %s...%s " % (original_sequence_string[0:10], original_sequence_string[0:10])
     print "Radomized sequence : %s...%s " % (randomized_sequence_string[0:10], randomized_sequence_string[0:10])
@@ -52,10 +88,18 @@ def write_new_sequence(fname, record):
     output_handle.close()
     print "Wrote randomized sequence to %s " % fname
 
+def process(input_fname, output_fname, num, mask=None):
+    """
+    """
+    seq, pos_maps = read_sequence(input_fname)
+    randomized_record = shuffle_sequence(seq, pos_maps, num, mask)
+    write_new_sequence(output_fname, randomized_record)
+
+
 def main(args):
     """
     """
-    seq = read_sequence(args.input_fasta)
+    seq, header = read_sequence(args.input_fasta)
     randomized_record = shuffle_sequence(seq, args.num)
     write_new_sequence(args.output_fasta, randomized_record)
     
