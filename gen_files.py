@@ -32,7 +32,6 @@ def process_sequence(fname, n_seqs_to_generate, n_times_randomize_seq, mask=None
 
         dir_name = "%04d"%i
         cmd = "python process_fasta.py --fasta_file %s --scratch_dir blah/%s"% (fname_out, dir_name)
-        print cmd
         with open(os.devnull, 'w') as FNULL:
             subprocess.call(cmd, shell=True, stdout=FNULL, stderr=subprocess.STDOUT)
         
@@ -91,6 +90,33 @@ if __name__=='__main__':
     seqs_to_gen = int(sys.argv[2])
     num_times_to_randomize = int(sys.argv[3])
 
+    '''
+
+    HSE1:		31795312-31795325
+    HSE2:		31795405-31795418
+    TATA:		31795486-31795491
+    TSS: 		31795512-31795512
+    TRIM28: 	31795571-31795578
+    PB1: 		31795743-31795749
+    PB2: 		31796358-31796364
+
+    '''
+    mask={}
+    with open("HSPA1B_freezesites.txt", "r") as fh:
+        for l in fh:
+            ls = l.split()
+            name = ls[0].strip(":")
+            s = int(ls[1].split("-")[0])
+            e = int(ls[1].split("-")[1])
+            try:
+                mask[name].append((s,e))
+            except KeyError:
+                mask[name] = [(s,e)]
+
+        
     run(fname_in, seqs_to_gen, num_times_to_randomize, 
-        mask={"mask_test3":[(133450052,133450052+300), (133450052+301,133450052+601)]})
+        mask=mask)
+    #run(fname_in, seqs_to_gen, num_times_to_randomize, 
+    #    mask={"mask_test3":[(133450052,133450052+300), 
+    #        (133450052+301,133450052+601)]})
 
