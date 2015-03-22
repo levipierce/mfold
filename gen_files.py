@@ -32,7 +32,7 @@ def process_sequence(fname, n_seqs_to_generate, n_times_randomize_seq, mask=None
             fname_out ='%04d_%s_mask_%s%s' % (i, base, mask[0], ext)
 
         dir_name = "%04d"%i
-        cmd = "python process_fasta.py --fasta_file %s --scratch_dir blah/%s"% (fname_out, dir_name)
+        cmd = "python process_fasta.py --fasta_file %s --scratch_dir %s"% (fname_out, dir_name)
         print cmd
         #with open(os.devnull, 'w') as FNULL:
         #subprocess.call(cmd, shell=True, stdout=FNULL, stderr=subprocess.STDOUT)

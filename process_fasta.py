@@ -15,6 +15,7 @@ import logging
 import glob
 
 os.environ["PATH"] = os.environ["PATH"] + ":/silly/"
+os.environ["VIENNA"] = "/home/lpierce/Software/vienna/share/ViennaRNA"
 FOLD_SIZE = 300
 SLIDING_WINDOW_SIZE = 150
 NUM_PROCESSORS = 8
@@ -31,7 +32,8 @@ def run_vienna(sequence):
     """                                                                         
     #RNAfold  --gquad   --noconv   <    test_fasta.fasta                        
     raw_data = os.path.splitext(sequence)[0] + ".vienna"                        
-    VIENNA_PARAMS = "/home/wanglab/software/viennaRNA-2.1.5/share/ViennaRNA/dna_mathews2004.par"                                                                 
+    VIENNA_PARAMS = os.path.join(os.environ["VIENNA"], "dna_mathews2004.par")
+
     v_energy = "Undefined"                                                        
     try:                                                                        
         with open(sequence, 'r') as fhin:                                       
@@ -331,7 +333,7 @@ def get_energy(scratch_dir, fasta_file_name):
 
 def main():
     args = parse_it()
-    scratch_dir = os.path.join('/var/tmp/', args.scratch_dir)
+    scratch_dir = os.path.join(os.getcwd(), args.scratch_dir)
     driver(scratch_dir, args.fasta_file_name)
     get_energy_simple(scratch_dir, args.fasta_file_name)
 
