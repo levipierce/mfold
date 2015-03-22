@@ -100,6 +100,7 @@ def process(input_fname, output_fname, num, mask=None):
     seq, pos_maps = read_sequence(input_fname)
     randomized_record = shuffle_sequence(seq, pos_maps, num, mask)
     write_new_sequence(output_fname, randomized_record, mask)
+    return output_fname
 
 
 def main(args):

@@ -25,15 +25,18 @@ def run(fname, seqs_to_gen, n_times_randomize_seq, mask=None):
 def process_sequence(fname, n_seqs_to_generate, n_times_randomize_seq, mask=None):
     sample = {}
     for i in range(1, n_seqs_to_generate+1):
-
         fname_out ='%04d_%s' % (i, fname)
-        process(fname, fname_out, n_times_randomize_seq, mask)
-        fname_in = fname_out
+        seq_name = process(fname, fname_out, n_times_randomize_seq, mask)
+        base, ext = os.path.splitext(fname)
+        if mask:
+            fname_out ='%04d_%s_mask_%s%s' % (i, base, mask[0], ext)
 
         dir_name = "%04d"%i
         cmd = "python process_fasta.py --fasta_file %s --scratch_dir blah/%s"% (fname_out, dir_name)
-        with open(os.devnull, 'w') as FNULL:
-            subprocess.call(cmd, shell=True, stdout=FNULL, stderr=subprocess.STDOUT)
+        print cmd
+        #with open(os.devnull, 'w') as FNULL:
+        #subprocess.call(cmd, shell=True, stdout=FNULL, stderr=subprocess.STDOUT)
+        subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT)
         
         energy_file_name = "%s_energy.dat"%dir_name
         shutil.move("master_energy.dat", energy_file_name)
