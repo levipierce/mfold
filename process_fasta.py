@@ -2,23 +2,19 @@
 import tarfile
 import os
 import subprocess
-import zipfile
-from os.path import join
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 from multiprocessing import Pool
 import shutil
-from subprocess import call
 import argparse
-import sys, time
+import time
 import logging
 import glob
 
-os.environ["PATH"] = os.environ["PATH"] + ":/silly/"
 os.environ["VIENNA"] = "/home/lpierce/Software/vienna/share/ViennaRNA"
 FOLD_SIZE = 300
 SLIDING_WINDOW_SIZE = 150
-NUM_PROCESSORS = 8
+NUM_PROCESSORS = 4
 
 def parse_it():
     parser = argparse.ArgumentParser(description='Process a fasta file.')
@@ -37,7 +33,7 @@ def run_vienna(sequence):
     v_energy = "Undefined"                                                        
     try:                                                                        
         with open(sequence, 'r') as fhin:                                       
-            with open(raw_data,'w') as fhout:                                   
+            with open(raw_data, 'w') as fhout:
                 v_result = subprocess.call(["RNAfold", "--gquad", "--noconv", "--paramFile", VIENNA_PARAMS], stdin=fhin, stdout=fhout)
                 ps_file = glob.glob("*.ps")                                     
                 if ps_file[0]:                                                  
@@ -45,7 +41,7 @@ def run_vienna(sequence):
     except IOError:                                                             
         pass                                                                    
     else:                                                                       
-        with open(raw_data,'r') as fh:                                          
+        with open(raw_data, 'r') as fh:
             for idx, line in enumerate(fh):                                     
                 if idx == 2:                                                    
                     v_energy = line.split()[-1].strip("(").strip(")")             
@@ -62,8 +58,9 @@ def fold_seq(input_args):
     mfold_arg1="SEQ=" + input_args[0]
     mfold_arg2="NA=DNA"
     with open(os.devnull, "w") as fnull:
-        result = subprocess.call(["mfold",mfold_arg1, mfold_arg2], \
-        stderr=fnull, stdout=fnull)
+        subprocess.check_call(["mfold", mfold_arg1, mfold_arg2], stderr=subprocess.STDOUT, stdout=fnull)
+        #p = subprocess.Popen(["mfold", mfold_arg1, mfold_arg2], stdout=fnull, stderr=fnull)
+        #p.communicate()
 
     seq_base_name = os.path.splitext(input_args[0])[0]
     try:
@@ -83,10 +80,10 @@ def fold_seq(input_args):
     for a_file in os.listdir(input_args[1]):
         if a_file.split(".")[-1] != "tgz":
             os.remove(a_file)
-    
-    e_out = open("energy.dat","w")
-    e_out.write(input_args[0] + " " + energy + " " + vienna_energy)
-    e_out.close()
+
+    with open("energy.dat", "w") as e_out:
+        e_out.write(input_args[0] + " " + energy + " " + vienna_energy)
+
 
 def driver(scratch_dir, fasta_file_name):
 
@@ -159,6 +156,7 @@ def driver(scratch_dir, fasta_file_name):
             jobs.append([prefix + ".fasta", seq_dir])
 
     print "folding", jobs
+
     worker_pool.map(fold_seq, jobs)
 
 def get_energy_simple(scratch_dir, fasta_file_name):
@@ -178,16 +176,14 @@ def get_energy_simple(scratch_dir, fasta_file_name):
             logging.debug("num seq %s"%num_seq)
             logging.debug("Divide by window size %f"%float(num_seq / SLIDING_WINDOW_SIZE))
             logging.debug("Modulo by window size %f"%float(num_seq % SLIDING_WINDOW_SIZE))
-            seq_segments =  [ record.seq[i:i+FOLD_SIZE] for i in range(0, num_seq, SLIDING_WINDOW_SIZE)]
+            seq_segments = [record.seq[i:i+FOLD_SIZE] for i in range(0, num_seq, SLIDING_WINDOW_SIZE)]
 
-        logging.debug("Seq segment length : %s"%len(seq_segments))
+        logging.debug("Seq segment length : %s" % len(seq_segments))
 
     cpu = 0
-    #for i in [0,10001,10003, 100002, 100003, 100004, 10005, 100006]:
     master_list = []
     for i in range(len(seq_segments)):
-        #print seq_segments[i], len(seq_segments[i])
-        prefix = ""
+
         if i < 10:
             prefix = "0000" + str(i)
         elif i < 100:
@@ -210,7 +206,7 @@ def get_energy_simple(scratch_dir, fasta_file_name):
             logging.debug("Index error, skipping %s, for cpu %s"%(i, cpu))
             pass
         else:
-            output = 0.0
+
             seq_dir = os.path.join(current_write_dir, prefix)
             ename = os.path.join(seq_dir, "energy.dat")
             try:
@@ -219,117 +215,14 @@ def get_energy_simple(scratch_dir, fasta_file_name):
                         master_list.append(line)
                         break
             except IOError:
-                logging.debug("Could not read energy file,%s"%())
+                logging.debug("Could not read energy file,%s" % (ename))
                 pass
 
     master_energy_filename = "master_energy.dat"
-    fh = open(master_energy_filename,'w')
-    for elem in master_list:
-        fh.write(elem)
-        fh.write('\n')
-
-    fh.close()
-
-
-def get_energy(scratch_dir, fasta_file_name):
-
-    logging.basicConfig(filename='build_master_energy.log', level=logging.DEBUG)
-    logging.debug(time.strftime("%H:%M:%S"))
-
-    # Clear existing directories
-    cpu_workdirs = []
-    for i in range(NUM_PROCESSORS):
-        cpu_workdir = os.path.join(scratch_dir, "cpu_" + str(i))
-        cpu_workdirs.append(cpu_workdir)
-    with open(fasta_file_name, "rU") as handle:
-        seq_segments = []
-        for record in SeqIO.parse(handle, "fasta"):
-            num_seq = len(record.seq)
-            logging.debug("record id %s"%record.id)
-            logging.debug("num seq %s"%num_seq)
-            logging.debug("Divide by window size %f"%float(num_seq / SLIDING_WINDOW_SIZE))
-            logging.debug("Modulo by window size %f"%float(num_seq % SLIDING_WINDOW_SIZE))
-            seq_segments =  [ record.seq[i:i+FOLD_SIZE] for i in range(0, num_seq, SLIDING_WINDOW_SIZE)]
-
-        logging.debug("Seq segment length : %s"%len(seq_segments))
-
-    cpu = 0
-    #for i in [0,10001,10003, 100002, 100003, 100004, 10005, 100006]:
-    master_list = []
-    for i in range(len(seq_segments)):
-        #print seq_segments[i], len(seq_segments[i])
-        prefix = ""
-        if i < 10:
-            prefix = "0000" + str(i)
-        elif i < 100:
-            prefix = "000" + str(i)
-        elif i < 1000:
-            prefix = "00" + str(i)
-        elif i < 10000:
-            prefix = "0" + str(i)
-        else:
-            prefix = "" + str(i)
-
-        dir_check = (float(num_seq / SLIDING_WINDOW_SIZE) / NUM_PROCESSORS) * (cpu + 1)
-        if i < dir_check:
-            pass
-        else:
-            cpu += 1
-        try:
-            current_write_dir = cpu_workdirs[cpu]
-        except IndexError:
-            logging.debug("Index error, skipping %s, for cpu %s"%(i, cpu))
-            pass
-        else:
-            output = 0.0
-            seq_dir = os.path.join(current_write_dir, prefix)
-            try:
-                energy_file_handle = open(os.path.join(seq_dir, "energy.dat"),'w')
-            except IOError:
-                pass
-
-            else:
-                tar_file_name = os.path.join(seq_dir, prefix + ".fasta.tgz")
-                print "file to unzip ", tar_file_name
-                tar = tarfile.open(tar_file_name, "r:gz")
-                ct_file_name_in_archive = prefix + ".ct"
-                ct_file_name = os.path.join(seq_dir, prefix + ".ct")
-                try:
-                    tar.extract(ct_file_name_in_archive, path=seq_dir)
-                except KeyError:
-                    output = prefix + " None"
-                    logging.debug("Key error, %s"%(output))
-                    energy_file_handle.write(output)
-                    master_list.append(output)
-                    energy_file_handle.close()
-                else:
-                    ct_file_handle = open(ct_file_name)
-                    for line in ct_file_handle:
-                        output = prefix + " " + line.split()[3]
-                        print output
-                        energy_file_handle.write(output)
-                        master_list.append(output)
-                        energy_file_handle.close()
-
-                        break
-                    ct_file_handle.close()
-                    os.remove(ct_file_name)
-                try:
-                    seq, dG = output.split()[0], float(output.split()[1])
-                except:
-                    seq = output.split()[0]
-                    dG  = 0.0
-                print "Adding :", seq, dG
-                tar.close()
-
-    master_energy_filename = "master_energy.dat"
-    fh = open(master_energy_filename,'w')
-    for elem in master_list:
-        fh.write(elem)
-        fh.write('\n')
-
-    fh.close()
-
+    with open(master_energy_filename, 'w') as fh:
+        for elem in master_list:
+            fh.write(elem)
+            fh.write('\n')
 
 def main():
     args = parse_it()

@@ -40,7 +40,7 @@ def process_sequence(fname, n_seqs_to_generate, n_times_randomize_seq, mask=None
         
         energy_file_name = "%s_energy.dat"%dir_name
         shutil.move("master_energy.dat", energy_file_name)
-        shutil.rmtree(dir_name)
+        #shutil.rmtree(dir_name)
         with open(energy_file_name, "r") as fh:
             for l in fh:
                 l_s = l.split()
