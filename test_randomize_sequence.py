@@ -1,6 +1,7 @@
 import randomize_sequence as rs
 import unittest
 
+
 class TestRandomizeSequenceFunctions(unittest.TestCase):
 
     def setUp(self):
@@ -70,6 +71,18 @@ class TestRandomizeSequenceFunctions(unittest.TestCase):
         self.assertEqual(expected_seq, region_seq)
 
         #similarity count should be higher too...
+    def test_masking_first_bp(self):
+        mask = {"HSE1" : [(31795202, 31795202)]}
+
+        seq, maps = rs.read_sequence(self.seq_fname)
+        abs_rel_map = maps[1]
+
+        expected_seq = ''.join([seq[abs_rel_map[s]] for s in range(31795202, 31795202+1)])
+        print expected_seq
+        rsr = rs.shuffle_sequence(seq, maps, n=100, mask=("HSE1", mask["HSE1"]))
+        region_seq = ''.join([rsr.seq[abs_rel_map[s]] for s in range(31795202, 31795202+1)])
+        print region_seq
+        self.assertEqual(expected_seq, region_seq)
 
 
 if __name__ == '__main__':

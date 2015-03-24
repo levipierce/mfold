@@ -40,6 +40,7 @@ def process_sequence(fname, n_seqs_to_generate, n_times_randomize_seq, mask=None
         
         energy_file_name = "%s_energy.dat"%dir_name
         shutil.move("master_energy.dat", energy_file_name)
+        #TODO Make this an option
         #shutil.rmtree(dir_name)
         with open(energy_file_name, "r") as fh:
             for l in fh:
@@ -82,7 +83,7 @@ def save_results(fname, n_seqs_to_generate, sample, mask_name=None):
         fh.write("\n")
         json.dump(m_b_mean_of_segments.tolist(),fh)
         fh.write("\n")
-        json.dump(["%3f"%_ for _ in m_a_mean_of_samples.tolist()],fh)
+        json.dump(["%3f" % _ for _ in m_a_mean_of_samples.tolist()],fh)
         fh.write("\n")
         json.dump(m_b_mean_of_samples.tolist(),fh)
 

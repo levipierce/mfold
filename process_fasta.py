@@ -12,6 +12,7 @@ import logging
 import glob
 
 os.environ["VIENNA"] = "/home/lpierce/Software/vienna/share/ViennaRNA"
+#These should be settings initalized when creating the class
 FOLD_SIZE = 300
 SLIDING_WINDOW_SIZE = 150
 NUM_PROCESSORS = 4

@@ -11,7 +11,6 @@ import copy
 def read_sequence(fname):
     """
     """
-    #Full path to file /Users/lpierce/mfold_development/CBFB.fasta 
     handle = open(fname, "rU")
     #store sequence
     sequence = []
@@ -59,7 +58,6 @@ def shuffle_sequence(sequence, pos_maps, n=100,  mask=None):
     if mask:
         abs_rel_pos_map = pos_maps[1]
         mask_name = mask[0]
-        #[(s0, e0), (s1,e1), (s2,e2)]
         mask_regions = mask[1]
         ran = list(randomized_sequence_string)
         ref = list(original_sequence_string)
