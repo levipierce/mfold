@@ -1,4 +1,4 @@
-import randomize_sequence as rs
+from randomize_sequence import randomize_sequence as rs
 import unittest
 
 
