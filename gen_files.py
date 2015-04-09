@@ -1,4 +1,4 @@
-from randomize_sequence import process
+from randomize_sequence import randomize_sequence as rs
 import subprocess
 import os
 import shutil
@@ -28,7 +28,7 @@ def process_sequence(fname, n_seqs_to_generate, n_times_randomize_seq, mask=None
     sample = {}
     for i in range(1, n_seqs_to_generate+1):
         fname_out = '%04d_%s' % (i, fname)
-        seq_name = process(fname, fname_out, n_times_randomize_seq, mask)
+        seq_name = rs.process(fname, fname_out, n_times_randomize_seq, mask)
         base, ext = os.path.splitext(fname)
         if mask:
             fname_out = '%04d_%s_mask_%s%s' % (i, base, mask[0], ext)
@@ -36,9 +36,10 @@ def process_sequence(fname, n_seqs_to_generate, n_times_randomize_seq, mask=None
         dir_name = "%04d" % i
         cmd = "python process_fasta.py --fasta_file %s --scratch_dir %s" % (fname_out, dir_name)
         print cmd
-        #with open(os.devnull, 'w') as FNULL:
-        #subprocess.call(cmd, shell=True, stdout=FNULL, stderr=subprocess.STDOUT)
-        subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT)
+        #This gets rid of the vienna output
+        with open(os.devnull, 'w') as FNULL:
+            subprocess.call(cmd, shell=True, stdout=FNULL, stderr=subprocess.STDOUT)
+        #subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT)
         
         energy_file_name = "%s_energy.dat" % dir_name
         shutil.move("master_energy.dat", energy_file_name)

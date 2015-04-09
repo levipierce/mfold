@@ -12,6 +12,7 @@ import logging
 import glob
 
 os.environ["VIENNA"] = "/home/lpierce/Software/vienna/share/ViennaRNA"
+os.environ["VIENNA"] = "/home/wanglab/software/viennaRNA-2.1.5/share/ViennaRNA"
 #These should be settings initalized when creating the class
 FOLD_SIZE = 300
 SLIDING_WINDOW_SIZE = 150
@@ -59,7 +60,8 @@ def fold_seq(input_args):
     mfold_arg1="SEQ=" + input_args[0]
     mfold_arg2="NA=DNA"
     with open(os.devnull, "w") as fnull:
-        subprocess.check_call(["mfold", mfold_arg1, mfold_arg2], stderr=subprocess.STDOUT, stdout=fnull)
+        #subprocess.check_call(["mfold", mfold_arg1, mfold_arg2], stderr=subprocess.STDOUT, stdout=fnull)
+        subprocess.check_call(["mfold", mfold_arg1, mfold_arg2], stderr=fnull, stdout=fnull)
         #p = subprocess.Popen(["mfold", mfold_arg1, mfold_arg2], stdout=fnull, stderr=fnull)
         #p.communicate()
 
