@@ -1,3 +1,4 @@
+#!/usr/bin/python
 from randomize_sequence import randomize_sequence as rs
 import subprocess
 import os
@@ -34,7 +35,7 @@ def process_sequence(fname, n_seqs_to_generate, n_times_randomize_seq, mask=None
             fname_out = '%04d_%s_mask_%s%s' % (i, base, mask[0], ext)
 
         dir_name = "%04d" % i
-        cmd = "python process_fasta.py --fasta_file %s --scratch_dir %s" % (fname_out, dir_name)
+        cmd = "process_fasta.py --fasta_file %s --scratch_dir %s" % (fname_out, dir_name)
         print cmd
         #This gets rid of the vienna output
         with open(os.devnull, 'w') as FNULL:
@@ -65,7 +66,6 @@ def save_results(fname, n_seqs_to_generate, sample, mask_name=None):
     :return:
     """
 
-
     m_a = np.array([s[0] for s in sample[1]])
     m_b = np.array([s[1] for s in sample[1]])
     for i in range(2, n_seqs_to_generate+1):
@@ -90,14 +90,14 @@ def save_results(fname, n_seqs_to_generate, sample, mask_name=None):
     with open(save_name, "w") as fh:
         json.dump(sample, fh)
         fh.write("\n")
-        json.dump(m_a_mean_of_segments.tolist(), fh)
+        json.dump(["%2f" % _ for _ in m_a_mean_of_segments.tolist()], fh)
         fh.write("\n")
-        json.dump(m_b_mean_of_segments.tolist(), fh)
+        json.dump(["%2f" % _ for _ in m_b_mean_of_segments.tolist()], fh)
         fh.write("\n")
         if n_seqs_to_generate != 1:
-            json.dump(["%3f" % _ for _ in m_a_mean_of_samples.tolist()], fh)
+            json.dump(["%2f" % _ for _ in m_a_mean_of_samples.tolist()], fh)
             fh.write("\n")
-            json.dump(["%3f" % _ for _ in m_b_mean_of_samples.tolist()], fh)
+            json.dump(["%2f" % _ for _ in m_b_mean_of_samples.tolist()], fh)
         else:
             json.dump(["0.00"], fh)
             fh.write("\n")
@@ -139,7 +139,7 @@ def parse_it():
     parser.add_argument(dest='fasta_file_name',
                         help='The name of the fasta file.')
     parser.add_argument('--num', dest='num_seqs_to_generate', type=int,
-                        help='The number of randomized sequences to generate.', default=1)
+                        help='The number of randomized sequences to generate.', default=2)
     parser.add_argument('--num_rand', dest='num_rand',
                         help='The number of times to randomize a sequence.', default=1)
     parser.add_argument('--mask_file', dest='mask_file_name',
